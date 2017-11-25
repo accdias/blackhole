@@ -25,8 +25,6 @@ BEGIN {
 	whitelist_ips["172.30."] = 1
 	whitelist_ips["172.31."] = 1
 	whitelist_ips["192.168."] = 1
-	whitelist_ips["200.153.43."] = 1
-	whitelist_ips["201.28.58."] = 1
 
 	print "Reading files and building lists..."
 
