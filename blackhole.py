@@ -80,11 +80,12 @@ def check_log_line(line):
         ip = extract_ip_addresses_regex.findall(s)[0]
 
     if ip:
+        prefix = "%s/%s" % (ip, 32)
         if is_whitelisted(ip):
             print 'Ignoring whitelisted address: %s' % ip
-        elif not (ip, 32) in blacklisted_prefixes:
-            print 'Blacklisting address: %s' % ip
-            blacklisted_prefixes.append((ip, 32))
+        elif not prefix in blacklisted_prefixes:
+            print 'Blacklisting address: %s' % prefix
+            blacklisted_prefixes.append(prefix)
 
 print 'Processing %s ... ' % blacklist_file
 f = open(blacklist_file)
@@ -92,14 +93,12 @@ for line in f:
     line = line.strip()
     if not (is_comment_regex.match(line) or is_blank_regex.match(line)):
         if '/' in line:
-            (prefix, netmask) = line.split('/')
-            netmask = int(netmask)
-        else:
             prefix = line
-            netmask = 32
+        else:
+            prefix = "%s/%s" % (line, 32)
 
-        if not (prefix, netmask) in blacklisted_prefixes:
-            blacklisted_prefixes.append((prefix, netmask))
+        if not prefix in blacklisted_prefixes:
+            blacklisted_prefixes.append(prefix)
 f.close()
 
 for logfile in logfiles:
@@ -112,8 +111,8 @@ for logfile in logfiles:
     except:
         print "Error opening %s ..." % logfile
 
-# sort the blacklisted_prefixes array
-blacklisted_prefixes = sorted(blacklisted_prefixes, key=lambda x: socket.inet_aton(x[0]))
+# summarize and sort the blacklisted_prefixes array
+blacklisted_prefixes = netaddr.cidr_merge(blacklisted_prefixes)
 
 # backup the old blacklist file
 print 'Copying %s to %s ...' % (blacklist_file, blacklist_file_backup)
@@ -122,12 +121,12 @@ shutil.copy(blacklist_file, blacklist_file_backup)
 # save the new blacklist file
 print 'Saving blacklist to %s ...' % blacklist_file
 f = open(blacklist_file, 'wb')
-for (prefix, netmask) in blacklisted_prefixes:
+for prefix in blacklisted_prefixes:
     # spamdyke doesn't like /32 address
-    if netmask == 32:
-        f.write('%s\n' % prefix)
+    if prefix.prefixlen == 32:
+        f.write('%s\n' % prefix.network)
     else:
-        f.write('%s/%s\n' % (prefix, netmask))
+        f.write('%s/%s\n' % (prefix.network, prefix.prefixlen))
 f.close()
 
 print 'Flushing blackhole routes out...'
@@ -137,11 +136,11 @@ except:
     print 'Error flushing blackhole routes out ...'
 
 print 'Installing new blackhole routes ...'
-for (prefix, netmask) in blacklisted_prefixes:
+for prefix in blacklisted_prefixes:
     try:
-        os.system('/sbin/ip route add blackhole %s/%s' % (prefix, netmask))
+        os.system('/sbin/ip route add blackhole %s' % prefix.cidr)
     except:
-        print 'Error installing blackhole route for %s/%s' % (prefix, netmask)
+        print 'Error installing blackhole route for %s' % prefix.cidr
         continue
 
 print 'Done.'
