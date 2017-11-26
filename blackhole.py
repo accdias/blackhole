@@ -3,7 +3,7 @@ import os
 import sys
 import re
 import shutil # for shutil.copy()
-import socket # for aton_inet()
+import netaddr # yum/dnf install -y python-netaddr python3-netaddr
 
 if not os.geteuid() == 0:
     sys.exit('Script must be run as root')
