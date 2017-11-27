@@ -9,40 +9,18 @@ if not os.geteuid() == 0:
     sys.exit('Script must be run as root')
 
 blacklist_file = '/etc/spamdyke/blacklist.d/ip'
-blacklist_file_backup = '%s.backup' % blacklist_file
+whitelist_file = '/etc/spamdyke/whitelist.d/ip'
+
+backup_suffix = 'backup'
+
+whitelisted_prefixes = []
+blacklisted_prefixes = []
 
 logfiles = (
     '/var/log/maillog',
     '/var/log/vsftpd.log',
     '/var/log/secure'
 )
-
-whitelisted_prefixes = (
-    '0.',
-    '10.',
-    '127.',
-    '169.254',
-    '172.16.',
-    '172.17.',
-    '172.18.',
-    '172.19.',
-    '172.20.',
-    '172.21.',
-    '172.22.',
-    '172.23.',
-    '172.24.',
-    '172.25.',
-    '172.26.',
-    '172.27.',
-    '172.28.',
-    '172.29.',
-    '172.30.',
-    '172.31.',
-    '192.168.',
-    '255.255.255.255'
-)
-
-blacklisted_prefixes = []
 
 smtp_login_fail_string = 'vchkpw-smtp: password fail'
 imap_login_fail_string = 'dovecot: imap-login: Disconnected (auth failed'
@@ -58,8 +36,13 @@ is_comment_regex = re.compile(r'^\s*[#;].*$')
 # Match empty lines
 is_blank_regex = re.compile(r'^\s*$')
 
-def is_whitelisted(ip=''):
-    return ip.startswith(whitelisted_prefixes) and True or False
+def is_whitelisted(ip=netaddr.IPNetwork('127.0.0.1/8')):
+    if ip.is_loopback() or ip.is_multicast() or ip.is_private():
+        return True
+    for prefix in whitelisted_prefixes:
+        if ip.ip in netaddr.IPNetwork(prefix):
+            return True
+    return False
 
 
 def check_log_line(line):
@@ -80,26 +63,27 @@ def check_log_line(line):
         ip = extract_ip_addresses_regex.findall(s)[0]
 
     if ip:
-        prefix = "%s/%s" % (ip, 32)
-        if is_whitelisted(ip):
+        if is_whitelisted(netaddr.IPNetwork(ip)):
             print 'Ignoring whitelisted address: %s' % ip
-        elif not prefix in blacklisted_prefixes:
-            print 'Blacklisting address: %s' % prefix
-            blacklisted_prefixes.append(prefix)
+        elif not ip in blacklisted_prefixes:
+            print 'Blacklisting address: %s' % ip
+            blacklisted_prefixes.append(ip)
 
-print 'Processing %s ... ' % blacklist_file
-f = open(blacklist_file)
-for line in f:
-    line = line.strip()
-    if not (is_comment_regex.match(line) or is_blank_regex.match(line)):
-        if '/' in line:
-            prefix = line
-        else:
-            prefix = "%s/%s" % (line, 32)
 
-        if not prefix in blacklisted_prefixes:
-            blacklisted_prefixes.append(prefix)
-f.close()
+def read_file_into_array(filename, array):
+    print 'Reading %s ... ' % filename
+    f = open(filename)
+    for line in f:
+        line = line.strip()
+        if not (is_comment_regex.match(line) or is_blank_regex.match(line)):
+            if not line in array:
+                array.append(line)
+    f.close()
+
+
+read_file_into_array(whitelist_file, whitelisted_prefixes)
+
+read_file_into_array(blacklist_file, blacklisted_prefixes)
 
 for logfile in logfiles:
     print 'Processing %s ... ' % logfile
@@ -115,8 +99,8 @@ for logfile in logfiles:
 blacklisted_prefixes = netaddr.cidr_merge(blacklisted_prefixes)
 
 # backup the old blacklist file
-print 'Copying %s to %s ...' % (blacklist_file, blacklist_file_backup)
-shutil.copy(blacklist_file, blacklist_file_backup)
+print 'Copying %s to %s.%s ...' % (blacklist_file, blacklist_file, backup_suffix)
+shutil.copy(blacklist_file, '%s.%s' % (blacklist_file, backup_suffix))
 
 # save the new blacklist file
 print 'Saving blacklist to %s ...' % blacklist_file
