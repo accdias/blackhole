@@ -63,6 +63,7 @@ def check_log_line(line):
         ip = extract_ip_addresses_regex.findall(s)[0]
 
     if ip:
+        ip = "%s/32" % ip
         if is_whitelisted(netaddr.IPNetwork(ip)):
             print 'Ignoring whitelisted address: %s' % ip
         elif not ip in blacklisted_prefixes:
