@@ -12,13 +12,10 @@ sshd_login_fail_string = 'Failed password for invalid user'
 spam_trap_admin_string = 'vchkpw-smtp: vpopmail user not found admin@'
 spam_trap_info_string = 'vchkpw-smtp: vpopmail user not found info@'
 
-
 # Use findall() method to return IPv4 addresses found in a string
 extract_ip_addresses_regex = re.compile(r'[0-9]+(?:\.[0-9]+){3}')
-
 # Match lines starting with comments markers
 is_comment_regex = re.compile(r'^\s*[#;].*$')
-
 # Match empty lines
 is_blank_regex = re.compile(r'^\s*$')
 
@@ -72,20 +69,14 @@ def check_log_line(line):
 
 
 def file_to_array(filename):
-    try:
-        print 'Reading %s ... ' % filename
-        f = open(filename)
-    except:
-        print "Error opening %s" % filename
-
-    array = []
-    for line in f:
-        line = line.strip()
-        if not (is_comment_regex.match(line) or is_blank_regex.match(line) or line in array):
-            array.append(line)
-    f.close()
+    print 'Reading %s ... ' % filename
+    with open(filename) as f:
+        array = []
+        for line in f:
+            line = line.strip()
+            if not (is_comment_regex.match(line) or is_blank_regex.match(line) or line in array):
+                array.append(line)
     return netaddr.cird_merge(array)
-
 
 if __name__ == '__main__':
     os.geteuid() == 0 or sys.exit('Script must be run as root')
@@ -105,14 +96,9 @@ if __name__ == '__main__':
 
     for logfile in logfiles:
         print 'Processing %s ... ' % logfile
-        try:
-            f = open(logfile)
-        except:
-            print "Error opening %s ..." % logfile
-
-        for line in f:
-            check_log_line(line)
-        f.close()
+        with open(logfile) as f:
+            for line in f:
+                check_log_line(line)
 
     # summarize and sort the blacklisted_prefixes array
     blacklisted_prefixes = netaddr.cidr_merge(blacklisted_prefixes)
@@ -123,10 +109,9 @@ if __name__ == '__main__':
 
     # save the new blacklist file
     print 'Saving blacklist to %s ...' % blacklist_file
-    f = open(blacklist_file, 'wb')
-    for prefix in blacklisted_prefixes:
-        f.write('%s\n' % prefix)
-    f.close()
+    with open(blacklist_file, 'wb') as f:
+        for prefix in blacklisted_prefixes:
+            f.write('%s\n' % prefix)
 
     print 'Flushing blackhole routes out...'
     try:
