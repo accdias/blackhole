@@ -13,7 +13,7 @@ spam_trap_admin_string = 'vchkpw-smtp: vpopmail user not found admin@'
 spam_trap_info_string = 'vchkpw-smtp: vpopmail user not found info@'
 
 # Use findall() method to return IPv4 addresses found in a string
-extract_ip_addresses_regex = re.compile(r'[0-9]+(?:\.[0-9]+){3}')
+extract_ip_addresses_regex = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
 # Match lines starting with a valid CIDR network
 is_cidr_regex = re.compile(r'^[0-9]+(?:\.[0-9]+){3}/[0-3]{1}[0-2]?$')
 # Match lines starting with comments markers
@@ -80,6 +80,7 @@ def file_to_array(filename):
                 if is_cidr.match(line) and not line in array:
                     array.append(line)
     return netaddr.cird_merge(array)
+
 
 if __name__ == '__main__':
     os.geteuid() == 0 or sys.exit('Script must be run as root')
