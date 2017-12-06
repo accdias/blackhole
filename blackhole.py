@@ -13,9 +13,9 @@ spam_trap_admin_string = 'vchkpw-smtp: vpopmail user not found admin@'
 spam_trap_info_string = 'vchkpw-smtp: vpopmail user not found info@'
 
 # Use findall() method to return IPv4 addresses found in a string
-extract_ip_addresses_regex = re.compile(r'(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')
+extract_ip_addresses_regex = re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b')
 # Match lines starting with a valid CIDR network
-is_cidr_regex = re.compile(r'^[0-9]+(?:\.[0-9]+){3}/[0-3]{1}[0-2]?$')
+is_cidr_regex = re.compile(r'\b(?:(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[0-3]){1}(?:[0-2])?)\b')
 # Match lines starting with comments markers
 is_comment_regex = re.compile(r'^\s*[#;].*$')
 # Match empty lines
