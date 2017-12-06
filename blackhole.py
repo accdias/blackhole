@@ -5,6 +5,13 @@ import re
 import shutil # for shutil.copy()
 import netaddr # yum/dnf install -y python-netaddr python3-netaddr
 
+__author__ = "Antonio Dias"
+__email__ = "accdias@gmail.com"
+__copyright__ = "Copyright 2017, Antonio Dias"
+__license__ = "GPL"
+__version__ = "0.1"
+__status__ = "Development"
+
 smtp_login_fail_string = 'vchkpw-smtp: password fail'
 imap_login_fail_string = 'dovecot: imap-login: Disconnected (auth failed'
 ftpd_login_fail_string = 'FAIL LOGIN: Client'
