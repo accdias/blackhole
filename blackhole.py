@@ -30,23 +30,26 @@ is_blank_regex = re.compile(r'^\s*$')
 
 
 def is_whitelisted(ip):
+    ip = netaddr.IPAddress(ip)
     if ip.is_loopback() or ip.is_multicast() or ip.is_private():
         return True
     for prefix in whitelisted_prefixes:
-        if ip in prefix:
+        if len(netaddr.cidr_merge((ip, prefix))) == 1:
             return True
     return False
 
 
 def is_blacklisted(ip):
+    ip = netaddr.IPAddress(ip)
     for prefix in blacklisted_prefixes:
-        if ip in prefix:
+        if len(netaddr.cidr_merge((ip, prefix))) == 1:
             return True
     return False
 
 
 def check_log_line(line):
     line = line.strip()
+    prefix = None
 
     if smtp_login_fail_string in line:
         # Jan 12 12:34:56 hostname vpopmail[1234]: vchkpw-smtp: password fail (pass: 'xxxxxxxxxx') user@example.com:203.0.113.1
@@ -66,13 +69,11 @@ def check_log_line(line):
     elif sshd_login_fail_string in line:
         # Jan 12 12:34:56 hostname sshd[1234]: Failed password for invalid user username from 203.0.113.1 12345 ssh2
         prefix = extract_ip_addresses_regex.findall(line)[0]
-    else:
-        prefix = ''
 
     if prefix:
-        if is_whitelisted(netaddr.IPAddress(prefix)):
+        if is_whitelisted(prefix):
             print 'Ignoring whitelisted address: %s' % prefix
-        elif not is_blacklisted(netaddr.IPAddress(prefix):
+        elif not is_blacklisted(prefix):
             print 'Blacklisting address: %s' % prefix
             blacklisted_prefixes.append(netaddr.IPNetwork(prefix))
 
@@ -84,9 +85,9 @@ def file_to_array(filename):
         for line in f:
             line = line.strip()
             if not (is_comment_regex.match(line) or is_blank_regex.match(line)):
-                if is_cidr.match(line) and not line in array:
+                if is_cidr_regex.match(line) and not line in array:
                     array.append(line)
-    return netaddr.cird_merge(array)
+    return netaddr.cidr_merge(array)
 
 
 if __name__ == '__main__':
