@@ -4,6 +4,7 @@ import sys
 import re
 import shutil # for shutil.copy()
 import netaddr # yum/dnf install -y python-netaddr python3-netaddr
+from pyroute2 import IPRoute # yum/dnf install -y python-pyroute2 python3-pyroute2
 
 __author__ = "Antonio Dias"
 __email__ = "accdias@gmail.com"
@@ -28,6 +29,8 @@ is_comment_regex = re.compile(r'^\s*[#;].*$')
 # Match empty lines
 is_blank_regex = re.compile(r'^\s*$')
 
+# For blocking by country list
+cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
 
 def is_whitelisted(ip):
     ip = netaddr.IPAddress(ip)
@@ -106,6 +109,15 @@ if __name__ == '__main__':
     whitelisted_prefixes = file_to_array(whitelist_file)
     blacklisted_prefixes = file_to_array(blacklist_file)
 
+    blackhole_routes = []
+    iproute = IPRoute()
+
+    # Blackhole routes are type 6
+    for route in iproute.get_routes(type=6):
+        blackhole_routes.append('%s/%s' % (route['attrs'][1][1],route['dst_len']))
+
+    blackhole_routes = netaddr.cidr_merge(blackhole_routes)
+
     for logfile in logfiles:
         print 'Processing %s ... ' % logfile
         with open(logfile) as f:
@@ -125,17 +137,23 @@ if __name__ == '__main__':
         for prefix in blacklisted_prefixes:
             f.write('%s\n' % prefix)
 
-    print 'Flushing blackhole routes out...'
-    try:
-        os.system('/sbin/ip route flush type blackhole')
-    except:
-        print 'Error flushing blackhole routes out ...'
+    print 'Flushing blackhole routes out ...'
+    for prefix in (set(routes) - set(blacklisted_prefixes)):
+        try:
+            print "Removing blackhole route to %s ..." % prefix
+            os.system('/sbin/ip route del blackhole %s' % prefix.cidr)
+        except:
+            print 'Error removing blackhole route for %s' % prefix.cidr
+            continue
 
     print 'Installing new blackhole routes ...'
-    for prefix in blacklisted_prefixes:
+    for prefix in (set(blacklisted_prefixes) - set(routes)):
         try:
+            print "Adding blackhole route to %s ..." % prefix
             os.system('/sbin/ip route add blackhole %s' % prefix.cidr)
         except:
             print 'Error installing blackhole route for %s' % prefix.cidr
+            continue
 
     print 'Done.'
+
