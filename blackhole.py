@@ -3,94 +3,104 @@ import os
 import sys
 import re
 import shutil # for shutil.copy()
-import netaddr # yum/dnf install -y python-netaddr python3-netaddr
+from ipaddress import ip_network, collapse_addresses
 from pyroute2 import IPRoute # yum/dnf install -y python-pyroute2 python3-pyroute2
 
-__author__ = "Antonio Dias"
-__email__ = "accdias@gmail.com"
-__copyright__ = "Copyright 2017, Antonio Dias"
-__license__ = "GPL"
-__version__ = "0.1"
-__status__ = "Development"
+__author__ = 'Antonio Dias'
+__email__ = 'accdias@gmail.com'
+__copyright__ = 'Copyright 2017, Antonio Dias'
+__license__ = 'GPL'
+__version__ = '0.1'
+__status__ = 'Development'
 
-smtp_login_fail_string = 'vchkpw-smtp: password fail'
-imap_login_fail_string = 'dovecot: imap-login: Disconnected (auth failed'
-ftpd_login_fail_string = 'FAIL LOGIN: Client'
-sshd_login_fail_string = 'Failed password for invalid user'
-spam_trap_admin_string = 'vchkpw-smtp: vpopmail user not found admin@'
-spam_trap_info_string = 'vchkpw-smtp: vpopmail user not found info@'
+fail_strings_lists = (
+    'vchkpw-smtp: password fail',
+    'dovecot: imap-login: Disconnected (auth failed',
+    'FAIL LOGIN: Client',
+    'Failed password for invalid user',
+    'vchkpw-smtp: vpopmail user not found admin@',
+    'vchkpw-smtp: vpopmail user not found info@'
+)
+
 
 # Use findall() method to return IPv4 addresses found in a string
 extract_ip_addresses_regex = re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b')
-# Match lines starting with a valid CIDR network
-is_cidr_regex = re.compile(r'\b(?:(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[0-3]){1}(?:[0-2])?)\b')
-# Match lines starting with comments markers
-is_comment_regex = re.compile(r'^\s*[#;].*$')
-# Match empty lines
-is_blank_regex = re.compile(r'^\s*$')
 
 # For blocking by country list
 cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
 
+# Match lines starting with a valid CIDR network
+is_cidr_regex = re.compile(r'\b(?:(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[0-3]){1}(?:[0-2])?)\b')
+def is_cidr(s):
+    return is_cidr_regex.match(s) and True or False
+
+
+# Match lines starting with comments markers
+is_comment_regex = re.compile(r'^\s*[#;].*$')
+def is_comment(s):
+    return is_comment_regex.match(s) and True or False
+
+
+# Match empty lines
+is_blank_regex = re.compile(r'^\s*$')
+def is_blankt(s):
+    return is_blank_regex.match(s) and True or False
+
+
 def is_whitelisted(ip):
-    ip = netaddr.IPAddress(ip)
-    if ip.is_loopback() or ip.is_multicast() or ip.is_private():
-        return True
-    for prefix in whitelisted_prefixes:
-        if len(netaddr.cidr_merge((ip, prefix))) == 1:
-            return True
+    if ip.is_global:
+        for prefix in whitelisted_prefixes:
+            if ip.subnet_of(prefix):
+                return True
     return False
 
 
 def is_blacklisted(ip):
-    ip = netaddr.IPAddress(ip)
     for prefix in blacklisted_prefixes:
-        if len(netaddr.cidr_merge((ip, prefix))) == 1:
+        if ip.subnet_of(prefix):
             return True
     return False
 
 
 def check_log_line(line):
     line = line.strip()
-    prefix = None
+    ip = None
 
-    if smtp_login_fail_string in line:
-        # Jan 12 12:34:56 hostname vpopmail[1234]: vchkpw-smtp: password fail (pass: 'xxxxxxxxxx') user@example.com:203.0.113.1
-        prefix = extract_ip_addresses_regex.findall(line)[0]
-    elif spam_trap_admin_string in line:
-        # Jan 12 12:34:56 hostname vpopmail[1234]: vchkpw-smtp: vpopmail user not found admin@example.com:203.0.113.1
-        prefix = extract_ip_addresses_regex.findall(line)[0]
-    elif spam_trap_admin_string in line:
-        # Jan 12 12:34:56 hostname vpopmail[1234]: vchkpw-smtp: vpopmail user not found info@example.com:203.0.113.1
-        prefix = extract_ip_addresses_regex.findall(line)[0]
-    elif imap_login_fail_string in line:
-        # Jan 12 12:34:56 hostname dovecot: imap-login: Disconnected (auth failed, 1 attempts): user=<user@example.com>, method=PLAIN, rip=203.0.113.1, lip=192.168.1.1
-        prefix = extract_ip_addresses_regex.findall(line)[0]
-    elif ftpd_login_fail_string in line:
-        # Sun Jan 12 12:34:56 2017 [pid 1234] [username] FAIL LOGIN: Client '203.0.113.1'
-        prefix = extract_ip_addresses_regex.findall(line)[0]
-    elif sshd_login_fail_string in line:
-        # Jan 12 12:34:56 hostname sshd[1234]: Failed password for invalid user username from 203.0.113.1 12345 ssh2
-        prefix = extract_ip_addresses_regex.findall(line)[0]
+    for fail_string in fail_strings_list:
+        if fail_string in line:
+            ip = extract_ip_addresses_regex.findall(line)[0]
+            break
 
-    if prefix:
-        if is_whitelisted(prefix):
-            print 'Ignoring whitelisted address: %s' % prefix
-        elif not is_blacklisted(prefix):
-            print 'Blacklisting address: %s' % prefix
-            blacklisted_prefixes.append(netaddr.IPNetwork(prefix))
+    if ip:
+        ip = ip_network(unicode(ip))
+        if is_whitelisted(ip):
+            print 'Ignoring whitelisted address: %s' % ip
+        elif not is_blacklisted(ip):
+            print 'Blacklisting address: %s' % ip
+            blacklisted_prefixes.append(ip)
 
 
-def file_to_array(filename):
+def file_as_array(filename):
     print 'Reading %s ... ' % filename
     with open(filename) as f:
         array = []
         for line in f:
             line = line.strip()
-            if not (is_comment_regex.match(line) or is_blank_regex.match(line)):
-                if is_cidr_regex.match(line) and not line in array:
-                    array.append(line)
-    return netaddr.cidr_merge(array)
+            if not (is_comment(line) or is_blank(line)):
+                if is_cidr(line) and not line in array:
+                    array.append(unicode(line))
+    return collapse_addresses(array)
+
+
+def blackhole_routes_as_array():
+    ip = IPRoute()
+    array = []
+
+    # Blackhole routes are type 6
+    for r in ip.get_routes(type=6):
+        array.append(ip_network(u'%s/%s' % (r['attrs'][1][1],r['dst_len'])))
+
+   return collapse_addresses(array)
 
 
 if __name__ == '__main__':
@@ -106,17 +116,9 @@ if __name__ == '__main__':
         '/var/log/secure'
     )
 
-    whitelisted_prefixes = file_to_array(whitelist_file)
-    blacklisted_prefixes = file_to_array(blacklist_file)
-
-    blackhole_routes = []
-    iproute = IPRoute()
-
-    # Blackhole routes are type 6
-    for route in iproute.get_routes(type=6):
-        blackhole_routes.append('%s/%s' % (route['attrs'][1][1],route['dst_len']))
-
-    blackhole_routes = netaddr.cidr_merge(blackhole_routes)
+    whitelisted_prefixes = file_as_array(whitelist_file)
+    blacklisted_prefixes = file_as_array(blacklist_file)
+    blackhole_prefixes = blackhole_routes_as_array()
 
     for logfile in logfiles:
         print 'Processing %s ... ' % logfile
@@ -125,7 +127,7 @@ if __name__ == '__main__':
                 check_log_line(line)
 
     # summarize and sort the blacklisted_prefixes array
-    blacklisted_prefixes = netaddr.cidr_merge(blacklisted_prefixes)
+    blacklisted_prefixes = collapse_addresses(blacklisted_prefixes)
 
     # backup the old blacklist file
     print 'Copying %s to %s.%s ...' % (blacklist_file, blacklist_file, backup_suffix)
@@ -140,19 +142,21 @@ if __name__ == '__main__':
     print 'Flushing blackhole routes out ...'
     for prefix in (set(routes) - set(blacklisted_prefixes)):
         try:
-            print "Removing blackhole route to %s ..." % prefix
-            os.system('/sbin/ip route del blackhole %s' % prefix.cidr)
+            print 'Removing blackhole route to %s ...' % prefix
+            #ip.route('del', dst=prefix, type='blackhole')
+            os.system('/sbin/ip route del blackhole %s' % prefix)
         except:
-            print 'Error removing blackhole route for %s' % prefix.cidr
+            print 'Error removing blackhole route for %s' % prefix
             continue
 
     print 'Installing new blackhole routes ...'
     for prefix in (set(blacklisted_prefixes) - set(routes)):
         try:
-            print "Adding blackhole route to %s ..." % prefix
-            os.system('/sbin/ip route add blackhole %s' % prefix.cidr)
+            print 'Adding blackhole route to %s ...' % prefix
+            #ip.route('add', dst=prefix, type='blackhole')
+            os.system('/sbin/ip route add blackhole %s' % prefix)
         except:
-            print 'Error installing blackhole route for %s' % prefix.cidr
+            print 'Error installing blackhole route for %s' % prefix
             continue
 
     print 'Done.'
