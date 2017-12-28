@@ -5,6 +5,7 @@ import re
 import shutil # for shutil.copy()
 from ipaddress import ip_network, collapse_addresses
 from pyroute2 import IPRoute # yum/dnf install -y python-pyroute2 python3-pyroute2
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 __author__ = 'Antonio Dias'
 __email__ = 'accdias@gmail.com'
@@ -72,23 +73,23 @@ def check_log_line(line):
             break
 
     if ip:
-        ip = ip_network(unicode(ip))
+        ip = ip_network(ip)
         if is_whitelisted(ip):
-            print 'Ignoring whitelisted address: %s' % ip
+            print('Ignoring whitelisted address: {}'.format(ip))
         elif not is_blacklisted(ip):
-            print 'Blacklisting address: %s' % ip
+            print('Blacklisting address: {}'.format(ip))
             blacklisted_prefixes.append(ip)
 
 
 def file_as_array(filename):
-    print 'Reading %s ... ' % filename
+    print('Reading {} ... '.format(filename))
     with open(filename) as f:
         array = []
         for line in f:
             line = line.strip()
             if not (is_comment(line) or is_blank(line)):
                 if is_cidr(line) and not line in array:
-                    array.append(unicode(line))
+                    array.append(line)
     return collapse_addresses(array)
 
 
@@ -98,7 +99,7 @@ def blackhole_routes_as_array():
 
     # Blackhole routes are type 6
     for r in ip.get_routes(type=6):
-        array.append(ip_network(u'%s/%s' % (r['attrs'][1][1],r['dst_len'])))
+        array.append(ip_network('{}/{}'.format(r['attrs'][1][1],r['dst_len'])))
 
    return collapse_addresses(array)
 
@@ -121,7 +122,7 @@ if __name__ == '__main__':
     blackhole_prefixes = blackhole_routes_as_array()
 
     for logfile in logfiles:
-        print 'Processing %s ... ' % logfile
+        print('Processing {} ... '.format(logfile))
         with open(logfile) as f:
             for line in f:
                 check_log_line(line)
@@ -130,34 +131,34 @@ if __name__ == '__main__':
     blacklisted_prefixes = collapse_addresses(blacklisted_prefixes)
 
     # backup the old blacklist file
-    print 'Copying %s to %s.%s ...' % (blacklist_file, blacklist_file, backup_suffix)
-    shutil.copy(blacklist_file, '%s.%s' % (blacklist_file, backup_suffix))
+    print('Copying {} to {}.{} ...'.format(blacklist_file, blacklist_file, backup_suffix))
+    shutil.copy(blacklist_file, '{}.{}'.format(blacklist_file, backup_suffix))
 
     # save the new blacklist file
-    print 'Saving blacklist to %s ...' % blacklist_file
+    print('Saving blacklist to {} ...'.format(blacklist_file))
     with open(blacklist_file, 'wb') as f:
         for prefix in blacklisted_prefixes:
-            f.write('%s\n' % prefix)
+            f.write('{}\n'.format(prefix))
 
-    print 'Flushing blackhole routes out ...'
+    print('Flushing blackhole routes out ...')
     for prefix in (set(routes) - set(blacklisted_prefixes)):
         try:
-            print 'Removing blackhole route to %s ...' % prefix
+            print('Removing blackhole route to {} ...'.format(prefix))
             #ip.route('del', dst=prefix, type='blackhole')
-            os.system('/sbin/ip route del blackhole %s' % prefix)
+            os.system('/sbin/ip route del blackhole {}'.format(prefix))
         except:
-            print 'Error removing blackhole route for %s' % prefix
+            print('Error removing blackhole route for {}'.format(prefix))
             continue
 
-    print 'Installing new blackhole routes ...'
+    print('Installing new blackhole routes ...')
     for prefix in (set(blacklisted_prefixes) - set(routes)):
         try:
-            print 'Adding blackhole route to %s ...' % prefix
+            print('Adding blackhole route to {} ...'.format(prefix))
             #ip.route('add', dst=prefix, type='blackhole')
-            os.system('/sbin/ip route add blackhole %s' % prefix)
+            os.system('/sbin/ip route add blackhole {}'.format(prefix))
         except:
-            print 'Error installing blackhole route for %s' % prefix
+            print('Error installing blackhole route for {}'.format(prefix))
             continue
 
-    print 'Done.'
+    print('Done.')
 
