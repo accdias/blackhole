@@ -1,0 +1,139 @@
+netaddr.cidr_merge(x)
+         655698 function calls in 0.317 seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001    0.317    0.317 <string>:1(<module>)
+    60592    0.028    0.000    0.041    0.000 __init__.py:1004(first)
+    32431    0.009    0.000    0.009    0.000 __init__.py:1012(last)
+    62780    0.013    0.000    0.013    0.000 __init__.py:1038(_hostmask_int)
+     2188    0.002    0.000    0.002    0.000 __init__.py:1131(sort_key)
+        1    0.055    0.055    0.316    0.316 __init__.py:1535(cidr_merge)
+     1833    0.041    0.000    0.151    0.000 __init__.py:1593(cidr_partition)
+     1094    0.007    0.000    0.018    0.000 __init__.py:1653(spanning_cidr)
+     1094    0.007    0.000    0.189    0.000 __init__.py:1734(iprange_to_cidrs)
+    32431    0.005    0.000    0.005    0.000 __init__.py:225(version)
+     2188    0.004    0.000    0.007    0.000 __init__.py:240(__init__)
+    64968    0.013    0.000    0.013    0.000 __init__.py:27(__init__)
+    29255    0.018    0.000    0.022    0.000 __init__.py:765(parse_ip_network)
+     1094    0.001    0.000    0.003    0.000 __init__.py:86(__lt__)
+    62780    0.070    0.000    0.129    0.000 __init__.py:876(__init__)
+    32921    0.004    0.000    0.004    0.000 __init__.py:979(<lambda>)
+     4376    0.001    0.000    0.002    0.000 compat.py:74(<lambda>)
+    94224    0.026    0.000    0.026    0.000 {hasattr}
+    35819    0.004    0.000    0.004    0.000 {isinstance}
+    54113    0.003    0.000    0.003    0.000 {len}
+    74673    0.005    0.000    0.005    0.000 {method 'append' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+     1094    0.000    0.000    0.000    0.000 {method 'extend' of 'list' objects}
+      932    0.000    0.000    0.000    0.000 {method 'pop' of 'list' objects}
+        1    0.001    0.001    0.001    0.001 {method 'sort' of 'list' objects}
+     1720    0.000    0.000    0.000    0.000 {min}
+     1094    0.001    0.000    0.004    0.000 {sorted}
+
+
+ipaddr.collapse_address_list(y)
+         200421681 function calls in 94.219 seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.001    0.001   94.219   94.219 <string>:1(<module>)
+   613505    0.210    0.000    0.210    0.000 ipaddr.py:1020(__init__)
+    96041    0.243    0.000    0.708    0.000 ipaddr.py:1027(_ip_int_from_string)
+   384164    0.236    0.000    0.437    0.000 ipaddr.py:1052(_parse_octet)
+    96041    0.245    0.000    0.322    0.000 ipaddr.py:1075(_string_from_ip_int)
+    58641    0.012    0.000    0.012    0.000 ipaddr.py:1100(version)
+   517464    0.418    0.000    0.646    0.000 ipaddr.py:1174(__init__)
+    96041    0.571    0.000    1.873    0.000 ipaddr.py:1232(__init__)
+   121523    0.150    0.000    0.177    0.000 ipaddr.py:1347(_is_valid_netmask)
+    19547    2.144    0.000    2.144    0.000 ipaddr.py:151(_find_address_range)
+    19595    0.015    0.000    0.019    0.000 ipaddr.py:169(_get_prefix_length)
+    19595    0.032    0.000    0.045    0.000 ipaddr.py:186(_count_righthand_zero_bits)
+    19547    0.221    0.000    1.150    0.000 ipaddr.py:203(summarize_address_range)
+        1    0.081    0.081    3.075    3.075 ipaddr.py:267(_collapse_address_list_recursive)
+        1    2.407    2.407   94.218   94.218 ipaddr.py:314(collapse_address_list)
+   325382    0.198    0.000    0.595    0.000 ipaddr.py:40(IPAddress)
+   318487    0.042    0.000    0.042    0.000 ipaddr.py:423(__int__)
+191855112   45.306    0.000   45.306    0.000 ipaddr.py:449(__eq__)
+    65934    0.019    0.000    0.032    0.000 ipaddr.py:456(__ne__)
+    25482    0.014    0.000    0.035    0.000 ipaddr.py:462(__le__)
+    25482    0.012    0.000    0.030    0.000 ipaddr.py:468(__ge__)
+   375948    0.158    0.000    0.207    0.000 ipaddr.py:474(__lt__)
+    45029    0.036    0.000    0.043    0.000 ipaddr.py:485(__gt__)
+    96041    0.087    0.000    0.410    0.000 ipaddr.py:511(__str__)
+    19595    0.010    0.000    0.014    0.000 ipaddr.py:514(__hash__)
+    96041    0.038    0.000    0.038    0.000 ipaddr.py:534(__init__)
+    65934    0.115    0.000    0.274    0.000 ipaddr.py:573(__lt__)
+    25482    0.029    0.000    0.121    0.000 ipaddr.py:611(__eq__)
+     5888    0.007    0.000    0.071    0.000 ipaddr.py:631(__hash__)
+    25482    0.062    0.000    0.318    0.000 ipaddr.py:634(__contains__)
+   447999    0.193    0.000    0.415    0.000 ipaddr.py:652(network)
+   152892    0.156    0.000    0.638    0.000 ipaddr.py:660(broadcast)
+   101929    0.121    0.000    0.304    0.000 ipaddr.py:668(hostmask)
+    50964    0.007    0.000    0.007    0.000 ipaddr.py:698(prefixlen)
+    76446    0.067    0.000    1.332    0.000 ipaddr.py:80(IPNetwork)
+    25483    0.087    0.000    0.155    0.000 ipaddr.py:831(_get_networks_key)
+    96041    0.031    0.000    0.031    0.000 ipaddr.py:841(_ip_int_from_prefix)
+    76446    0.177    0.000    1.884    0.000 ipaddr.py:888(iter_subnets)
+    25482    0.046    0.000    1.929    0.000 ipaddr.py:955(subnet)
+    25482    0.061    0.000    0.621    0.000 ipaddr.py:959(supernet)
+    25483    0.001    0.000    0.001    0.000 {hash}
+    19595    0.003    0.000    0.003    0.000 {hex}
+  1190475    0.178    0.000    0.178    0.000 {isinstance}
+   548254    0.034    0.000    0.034    0.000 {len}
+    70561    0.008    0.000    0.008    0.000 {method 'append' of 'list' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+    19547    0.004    0.000    0.004    0.000 {method 'extend' of 'list' objects}
+   702820    0.059    0.000    0.059    0.000 {method 'get' of 'dict' objects}
+    19547   39.398    0.002   84.668    0.004 {method 'index' of 'list' objects}
+   384164    0.056    0.000    0.056    0.000 {method 'insert' of 'list' objects}
+   384164    0.200    0.000    0.200    0.000 {method 'issuperset' of 'frozenset' objects}
+    96041    0.022    0.000    0.022    0.000 {method 'join' of 'str' objects}
+   409646    0.081    0.000    0.081    0.000 {method 'split' of 'str' objects}
+    39190    0.017    0.000    0.017    0.000 {range}
+        3    0.095    0.032    0.679    0.226 {sorted}
+
+
+ipaddress.collapse_addresses(z)
+         1497840 function calls in 0.650 seconds
+
+   Ordered by: standard name
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.650    0.650 <string>:1(<module>)
+    19547    0.014    0.000    0.036    0.000 ipaddress.py:107(__gt__)
+    19595    0.004    0.000    0.004    0.000 ipaddress.py:1226(_make_netmask)
+    58641    0.007    0.000    0.007    0.000 ipaddress.py:1364(version)
+    19596    0.011    0.000    0.016    0.000 ipaddress.py:1375(__init__)
+    19595    0.055    0.000    0.101    0.000 ipaddress.py:1584(__init__)
+    19548    0.006    0.000    0.006    0.000 ipaddress.py:286(_find_address_range)
+    19595    0.010    0.000    0.123    0.000 ipaddress.py:306(_count_righthand_zero_bits)
+    39142    0.059    0.000    0.339    0.000 ipaddress.py:322(summarize_address_range)
+        1    0.040    0.040    0.650    0.650 ipaddress.py:426(collapse_addresses)
+    19596    0.003    0.000    0.003    0.000 ipaddress.py:537(_check_int_address)
+        1    0.000    0.000    0.000    0.000 ipaddress.py:556(_ip_int_from_prefix)
+    39190    0.009    0.000    0.011    0.000 ipaddress.py:65(_compat_bit_length)
+    39190    0.005    0.000    0.005    0.000 ipaddress.py:672(__int__)
+    19547    0.005    0.000    0.005    0.000 ipaddress.py:675(__eq__)
+   273434    0.130    0.000    0.200    0.000 ipaddress.py:682(__lt__)
+    19595    0.007    0.000    0.012    0.000 ipaddress.py:713(__hash__)
+    19595    0.009    0.000    0.009    0.000 ipaddress.py:731(__init__)
+    19595    0.001    0.000    0.001    0.000 {hash}
+    19595    0.004    0.000    0.004    0.000 {hex}
+   670232    0.091    0.000    0.091    0.000 {isinstance}
+        1    0.000    0.000    0.000    0.000 {iter}
+    19595    0.001    0.000    0.001    0.000 {len}
+    25483    0.001    0.000    0.001    0.000 {method 'append' of 'list' objects}
+    39190    0.002    0.000    0.002    0.000 {method 'bit_length' of 'int' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+    19547    0.014    0.000    0.352    0.000 {method 'extend' of 'list' objects}
+    39190    0.110    0.000    0.110    0.000 {min}
+        1    0.000    0.000    0.000    0.000 {next}
+        1    0.052    0.052    0.235    0.235 {sorted}
+
+
+len(xx) =  25483
+len(yy) =  25483
+len(zz) =  25483
