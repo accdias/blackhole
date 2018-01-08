@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     # save the new blacklist file
     print('Saving blacklist to {} ...'.format(blacklist_file))
-    with open(blacklist_file, 'wb') as f:
+    with open(blacklist_file, 'w') as f:
         for prefix in blacklisted_prefixes:
             f.write('{}\n'.format(prefix))
 
