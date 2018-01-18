@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import sys
 import re
-import shutil # for shutil.copy()
+import shutil  # for shutil.copy()
 from ipaddress import ip_network, collapse_addresses
-from pyroute2 import IPRoute # yum/dnf install -y python-pyroute2 python3-pyroute2
-from __future__ import absolute_import, division, print_function, unicode_literals
+from pyroute2 import IPRoute  # yum/dnf install -y python-pyroute2 python3-pyroute2
 
 __author__ = 'Antonio Dias'
 __email__ = 'accdias@gmail.com'
@@ -14,7 +15,7 @@ __license__ = 'GPL'
 __version__ = '0.1'
 __status__ = 'Development'
 
-fail_strings_lists = (
+fail_strings_list = (
     'vchkpw-smtp: password fail',
     'dovecot: imap-login: Disconnected (auth failed',
     'FAIL LOGIN: Client',
@@ -25,26 +26,65 @@ fail_strings_lists = (
 
 
 # Use findall() method to return IPv4 addresses found in a string
-extract_ip_addresses_regex = re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b')
+extract_ip_addresses_regex = re.compile(
+    r'''
+        \b
+        (?:
+            (?:
+               25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
+            ?)\.
+        ){3}
+        (?:
+            25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
+        ?)
+        \b
+    ''')
 
 # For blocking by country list
 cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
 
 # Match lines starting with a valid CIDR network
-is_cidr_regex = re.compile(r'\b(?:(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/(?:[0-3]){1}(?:[0-2])?)\b')
+is_cidr_regex = re.compile(
+    r'''
+        \b
+        (?:
+            (?:
+                (?:
+                    25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
+                ?)\.
+            ){3}
+            (?:
+                25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
+            ?)
+            /
+            (?:
+                [0-3]){1}
+                (?:
+                    [0-2]
+                )?
+            ?)
+        ?)
+        \b
+    ''')
+
+
 def is_cidr(s):
     return is_cidr_regex.match(s) and True or False
 
 
 # Match lines starting with comments markers
 is_comment_regex = re.compile(r'^\s*[#;].*$')
+
+
 def is_comment(s):
     return is_comment_regex.match(s) and True or False
 
 
 # Match empty lines
 is_blank_regex = re.compile(r'^\s*$')
-def is_blankt(s):
+
+
+def is_blank(s):
     return is_blank_regex.match(s) and True or False
 
 
@@ -67,10 +107,8 @@ def check_log_line(line):
     line = line.strip()
     ip = None
 
-    for fail_string in fail_strings_list:
-        if fail_string in line:
-            ip = extract_ip_addresses_regex.findall(line)[0]
-            break
+    if any([fail_string in line for fail_string in fail_strings_list]):
+        ip = extract_ip_addresses_regex.findall(line)[0]
 
     if ip:
         ip = ip_network(ip)
@@ -87,8 +125,8 @@ def file_as_array(filename):
         array = []
         for line in f:
             line = line.strip()
-            if not (is_comment(line) or is_blank(line)):
-                if is_cidr(line) and not line in array:
+            if any((is_comment(line), is_blank(line))):
+                if is_cidr(line) and line not in array:
                     array.append(line)
     return collapse_addresses(array)
 
@@ -99,9 +137,9 @@ def blackhole_routes_as_array():
 
     # Blackhole routes are type 6
     for r in ip.get_routes(type=6):
-        array.append(ip_network('{}/{}'.format(r['attrs'][1][1],r['dst_len'])))
+        array.append(ip_network('{}/{}'.format(r['attrs'][1][1], r['dst_len'])))
 
-   return collapse_addresses(array)
+    return collapse_addresses(array)
 
 
 if __name__ == '__main__':
@@ -141,24 +179,23 @@ if __name__ == '__main__':
             f.write('{}\n'.format(prefix))
 
     print('Flushing blackhole routes out ...')
-    for prefix in (set(routes) - set(blacklisted_prefixes)):
+    for prefix in (set(blackhole_prefixes) - set(blacklisted_prefixes)):
         try:
             print('Removing blackhole route to {} ...'.format(prefix))
-            #ip.route('del', dst=prefix, type='blackhole')
+            # ip.route('del', dst=prefix, type='blackhole')
             os.system('/sbin/ip route del blackhole {}'.format(prefix))
         except:
             print('Error removing blackhole route for {}'.format(prefix))
             continue
 
     print('Installing new blackhole routes ...')
-    for prefix in (set(blacklisted_prefixes) - set(routes)):
+    for prefix in (set(blacklisted_prefixes) - set(blackhole_prefixes)):
         try:
             print('Adding blackhole route to {} ...'.format(prefix))
-            #ip.route('add', dst=prefix, type='blackhole')
+            # ip.route('add', dst=prefix, type='blackhole')
             os.system('/sbin/ip route add blackhole {}'.format(prefix))
         except:
             print('Error installing blackhole route for {}'.format(prefix))
             continue
 
     print('Done.')
-
