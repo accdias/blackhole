@@ -31,17 +31,14 @@ extract_ip_addresses_regex = re.compile(
         \b
         (?:
             (?:
-               25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
-            ?)\.
-        ){3}
+               25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]  # 0-255
+            ?)\.                                    # .
+        ){3}                                        # 3 times
         (?:
-            25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
+            25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]     # 0-255
         ?)
         \b
-    ''')
-
-# For blocking by country list
-cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
+    ''', re.VERBOSE)
 
 # Match lines starting with a valid CIDR network
 is_cidr_regex = re.compile(
@@ -50,22 +47,25 @@ is_cidr_regex = re.compile(
         (?:
             (?:
                 (?:
-                    25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
-                ?)\.
-            ){3}
+                    25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]  # 0-255
+                ?)\.                                     # .
+            ){3}                                         # 3 times
             (?:
-                25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]
+                25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]      # 0-255
             ?)
-            /
+            /                                            # /
             (?:
-                [0-3]){1}
+                [1-3]){1}                                # 1-3
                 (?:
-                    [0-2]
+                    [0-2]                                # 0-2
                 )?
             ?)
         ?)
         \b
-    ''')
+    ''', re.VERBOSE)
+
+# For blocking by country list
+cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
 
 
 def is_cidr(s):
