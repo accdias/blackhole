@@ -123,8 +123,7 @@ def file_as_array(filename):
     print('Reading {} ... '.format(filename))
     array = []
     if filename.exists():
-        with open(filename) as f:
-            array = []
+        with filename.open() as f:
             for line in f:
                 line = line.strip()
                 if any((is_comment(line), is_blank(line))):
@@ -162,7 +161,7 @@ if __name__ == '__main__':
 
     for logfile in logfiles:
         print('Processing {} ... '.format(logfile))
-        with open(logfile) as f:
+        with logfile.open() as f:
             for line in f:
                 check_log_line(line)
 
@@ -175,7 +174,7 @@ if __name__ == '__main__':
 
     # save the new blacklist file
     print('Saving blacklist to {} ...'.format(blacklist_file))
-    with open(blacklist_file, 'w') as f:
+    with blacklist_file.open(mode='w') as f:
         for prefix in blacklisted_prefixes:
             f.write('{}\n'.format(prefix))
 
