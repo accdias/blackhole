@@ -1,12 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import sys
 import re
 import shutil  # for shutil.copy()
 from ipaddress import ip_network, collapse_addresses
 from pyroute2 import IPRoute  # yum/dnf install -y python-pyroute2 python3-pyroute2
+from pathlib import Path
 
 __author__ = 'Antonio Dias'
 __email__ = 'accdias@gmail.com'
@@ -121,13 +121,15 @@ def check_log_line(line):
 
 def file_as_array(filename):
     print('Reading {} ... '.format(filename))
-    with open(filename) as f:
-        array = []
-        for line in f:
-            line = line.strip()
-            if any((is_comment(line), is_blank(line))):
-                if is_cidr(line) and line not in array:
-                    array.append(line)
+    array = []
+    if filename.exists():
+        with open(filename) as f:
+            array = []
+            for line in f:
+                line = line.strip()
+                if any((is_comment(line), is_blank(line))):
+                    if is_cidr(line) and line not in array:
+                        array.append(line)
     return collapse_addresses(array)
 
 
@@ -138,21 +140,20 @@ def blackhole_routes_as_array():
     # Blackhole routes are type 6
     for r in ip.get_routes(type=6):
         array.append(ip_network('{}/{}'.format(r['attrs'][1][1], r['dst_len'])))
-
     return collapse_addresses(array)
 
 
 if __name__ == '__main__':
     os.geteuid() == 0 or sys.exit('Script must be run as root')
 
-    blacklist_file = '/etc/spamdyke/blacklist.d/ip'
-    whitelist_file = '/etc/spamdyke/whitelist.d/ip'
+    blacklist_file = Path('/etc/spamdyke/blacklist.d/ip')
+    whitelist_file = Path('/etc/spamdyke/whitelist.d/ip')
     backup_suffix = 'backup'
 
     logfiles = (
-        '/var/log/maillog',
-        '/var/log/vsftpd.log',
-        '/var/log/secure'
+        Path('/var/log/maillog'),
+        Path('/var/log/vsftpd.log'),
+        Path('/var/log/secure')
     )
 
     whitelisted_prefixes = file_as_array(whitelist_file)
