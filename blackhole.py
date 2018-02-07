@@ -12,7 +12,7 @@ __author__ = 'Antonio Dias'
 __email__ = 'accdias@gmail.com'
 __copyright__ = 'Copyright 2017, Antonio Dias'
 __license__ = 'GPL'
-__version__ = '0.1'
+__version__ = '0.2'
 __status__ = 'Development'
 
 fail_strings_list = (
@@ -24,6 +24,8 @@ fail_strings_list = (
     'vchkpw-smtp: vpopmail user not found info@'
 )
 
+# For blocking by country list
+cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
 
 # Use findall() method to return IPv4 addresses found in a string
 extract_ip_addresses_regex = re.compile(
@@ -63,9 +65,6 @@ is_cidr_regex = re.compile(
         ?)
         \b
     ''', re.VERBOSE)
-
-# For blocking by country list
-cidr_by_country_url_mask = 'http://www.ipdeny.com/ipblocks/data/countries/%s.zone'
 
 
 def is_cidr(s):
@@ -147,7 +146,8 @@ if __name__ == '__main__':
 
     blacklist_file = Path('/etc/spamdyke/blacklist.d/ip')
     whitelist_file = Path('/etc/spamdyke/whitelist.d/ip')
-    backup_suffix = 'backup'
+    backup_suffix = '.backup'
+    blacklist_file_backup = blacklist_file.parent / Path(blacklist_file.stem + backup_suffix)
 
     logfiles = (
         Path('/var/log/maillog'),
